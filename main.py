@@ -1,4 +1,5 @@
 import numpy as np
+'''
 import pandas as pd
 from preprocess import *
 
@@ -10,3 +11,11 @@ train_data = np.array(data.iloc[:,1:])
 
 word2idx = make_corpus(train_data)
 train_data = word_to_id(train_data, word2idx)
+
+'''
+import torch
+
+a = torch.nn.Linear(10,10)
+print(a.weight)
+
+
