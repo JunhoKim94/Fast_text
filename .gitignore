@@ -3,3 +3,5 @@
 __pychache__/*
 1-billion-word/*
 bestmodel.pickle
+.vscode
+__pychache__

@@ -1,11 +1,57 @@
 import numpy as np
-
+from tqdm import tqdm
 '''
 word ==> subwords ==> summation(hidden) 이 추가된 word2vec = Fasttext
          BFS 이용subword 추출
 '''
+def make_corpus(data):
+    '''
+    Basic word2idx : ignore frequency, only word --> id
+    data = number_of_data x 2 (title, description)
+    '''
 
-def make_corpus(n_grams):
+    words = []
+    for lines in data:
+        for line in lines:
+            words += line.split()
+        
+    word2idx = {"UNK" : 0}
+    for word in words:
+        if word not in word2idx:
+            word2idx[word] = len(word2idx)
+    return word2idx
+
+def word_to_id(data, word2idx):
+
+    stack = []
+    for lines in data:
+        words = []
+        for line in lines:
+            temp = line.split()
+            for word in temp:
+                if word not in word2idx:
+                    words += [word2idx["UNK"]]
+                else:
+                    words += [word2idx[word]]
+
+        stack.append(words)
+
+    length = [len(s) for s in stack]
+    max_length = max(length)
+
+    train_data = np.zeros((len(data), max_length + 1), dtype = np.int32)
+
+    for i in tqdm(range(len(data))):
+        train_data[i, :length[i]] = stack[i]
+        train_data[i, -1] = length[i]
+
+    return train_data
+
+
+#def get_train_batch(data):
+
+
+def make_ngram_corpus(n_grams):
 
     def make_subword(n_grams):
         alphabet = [chr(i) for i in range(ord('a'),ord('z')+1)]

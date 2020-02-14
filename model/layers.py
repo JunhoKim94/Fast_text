@@ -3,18 +3,82 @@ import numpy as np
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))    
 
+class BCELossWithSigmoid:
+    def __init__(self):
+        self.params = None
+        self.grads = None
+        self.eps = 1e-7
+
+        self.y_pred , self.target = None, None
+        self.loss = None
+
+    def forward(self, y_pred, target):
+
+        self.target = target
+        self.y_pred = sigmoid(y_pred)
+
+        number = target.shape[0]
+
+        self.loss = -self.target * np.log(self.y_pred + self.eps) - (1 - self.target) * np.log(1 - self.y_pred + self.eps)
+
+        self.loss = np.sum(self.loss) / number
+
+        return self.loss
+
+    def backward(self):
+        dx = self.y_pred - self.target
+        return dx
+
+class Ce_losswithsoftmax:
+    def __init__(self):
+        self.params = None
+        self.grads = None
+        self.eps = 1e-7
+
+        self.y_pred, self.target = None, None
+        self.loss = 0
+
+    def forward(self, y_pred, target):
+        '''
+        y_pred = (Batch, class num)
+        target = (Batch, 1)
+        '''
+        batch = target.shape[0]
+        self.y_pred = softmax(y_pred)
+        self.target = np.eye(batch)[target]
+
+        self.loss = np.sum(self.target * np.log(self.y_pred + self.eps)) / batch
+
+        return self.loss
+    def backward(self):
+        dx = self.y_pred - self.target
+        return dx
+
 class Embedding:
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size, output_size, padding_idx):
+
+        W = np.random.uniform(low = -1/ output_size, high = 1/ output_size, size = (input_size, output_size))
 
         #self.W = np.random.uniform(size = (self.input_size, self.output_size))
-        self.params = [np.random.random(size = (input_size, output_size)).astype(np.float32)]
-        self.grads = [np.zeros_like(self.params[0])]
+        self.params = [W]
+        self.grads = [np.zeros_like(W)]
 
+        if padding_idx:
+            self.padding_idx = padding_idx
+        else:
+            self.padding_idx = None
     def forward(self, x):
         '''
         x = list or array
         '''
-        self.idx = x
+        if self.padding_idx is not None:
+            self.idx = []
+            for i in x:
+                if (i != self.padding_idx):
+                    self.idx.append(i)
+        else:
+            self.idx = x
+
         W, = self.params
         output = W[self.idx]
 
@@ -25,10 +89,10 @@ class Embedding:
         idx 해당 하는 w 만 grad = 1 * dout
         나머지 0
         '''
-        #dW, = self.grads
-        W,  = self.params
-        #dW[self.idx] += dout
-        W[self.idx] -= dout * lr
+        dW, = self.grads
+        #W,  = self.params
+        dW[self.idx] += dout
+        #W[self.idx] -= dout * lr
         #np.add.at(dW, self.idx, dout)
 
     def _zero_grad(self):
@@ -37,10 +101,12 @@ class Embedding:
 
 
 class Linear:
-    def __init__(self, W):
+    def __init__(self, input_size, output_size):
 
-        self.grad = [np.zeros_like(W)]
-        self.params = [W]
+        W = np.random.uniform(low = -1, high = 1, size = (input_size, output_size))
+        b = np.random.uniform(low = -1, high = 1, size = (output_size, 1))
+        self.grad = [np.zeros_like(W), np.zeros_like(b)]
+        self.params = [W, b]
 
     def forward(self, x):
         '''
@@ -50,10 +116,10 @@ class Linear:
         out : (N,D)
         '''
 
-        W, = self.params
-
+        W,b = self.params
         self.x = x
-        output = np.matmul(self.x,W)
+
+        output = np.matmul(self.x,W) + b
 
         return output
 
@@ -64,7 +130,7 @@ class Linear:
         output: dW : (D,H)
                 db : (H,)
         '''
-        W,b = self.paramss
+        W,b = self.params
 
         dx = np.dot(dout, W.T)
         dW = np.matmul(self.x.T, dout)

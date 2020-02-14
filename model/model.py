@@ -3,61 +3,32 @@ from model.layers import Embedding, Sigmoid, Softmax, Linear, sigmoid
 from preprocess import *
 import pickle
 
-class BCELossWithSigmoid:
-    def __init__(self):
-        self.params = None
-        self.grads = None
-        self.eps = 1e-7
+class Fasttext:
+    def __init__(self, input_size, embed_size, hidden, output):
+        self.embed = Embedding(input_size, embed_size)
+        self.hidden = Linear(embed_size, hidden)
+        self.output_layer = Linear(hidden, output)
 
-        self.y_pred , self.target = None, None
-        self.loss = None
+        self.layer = [self.embed, self.hidden, self.output_layer]
 
-    def forward(self, y_pred, target):
-
-        self.target = target
-        self.y_pred = sigmoid(y_pred)
-
-        number = target.shape[0]
-
-        self.loss = -self.target * np.log(self.y_pred + self.eps) - (1 - self.target) * np.log(1 - self.y_pred + self.eps)
-
-        self.loss = np.sum(self.loss) / number
-
-        return self.loss
-
-    def backward(self):
-        dx = self.y_pred - self.target
-        return dx
-
-class Negative_Sampling:
-    def __init__(self, vocab_size, sub_vocab, projection):
-        self.Embedding = Embedding(sub_vocab, projection)
-        self.N_Embdding = Embedding(vocab_size , projection)
-
-        self.layers = [self.Embedding, self.N_Embdding]
-        self.params = []
-        self.grads = []
-
-        for layer in self.layers:
-            self.params.append(layer.params)
-            self.grads.append(layer.grads)
-
-    def forward(self, x, sampled):
+    def forward(self, x):
         '''
-        x = (1, D) D = subwords 개수
-        sampled = (1, sampled)
+        x = list of vocab(index) = (batch,S)
         '''
-        
-        #D x projection
-        out = self.Embedding.forward(x)
-        #1 x projection
-        out = np.sum(out, axis = 0, keepdims= True)
 
-        #sampled x projection
-        vec = self.N_Embdding(sampled)
+        output = self.embed.forward(x)
 
-        output = np.sum(out * vec, axis = 1)
+        output = np.sum(output, axis = 1)
+
+        output = self.hidden.forward(output)
+        output = self.output_layer.forward(output)
+
         return output
 
-    def backward(self, dout):
-        
+    def backward(self, dev):
+        '''
+        dev = (Batch, class)
+        '''
+        dout = self.output_layer.backward(dev)
+        dout = self.hidden.backward(dout)
+        self.embed.backward(dout)
