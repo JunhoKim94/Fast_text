@@ -21,7 +21,7 @@ vocab_size = len(word2idx)
 class_num = 4
 epochs = 10
 total_word = len(train_data)
-lr = 0.01
+lr = 0.001
 #batch_size = 100
 
 def gen_train(data, val_ratio = 0.1):
@@ -48,10 +48,9 @@ for epoch in range(epochs + 1):
         x_train = train_data[iteration,:length]
         y_train = train_data[iteration,-1] - 1
 
+            
         y_pred = model.forward(x_train)
-
         loss = criterion.forward(y_pred, y_train)
-
         epoch_loss += loss
 
         d_out = criterion.backward()

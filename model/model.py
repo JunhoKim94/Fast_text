@@ -21,14 +21,17 @@ class Fasttext:
         '''
         x = list of vocab(index) = (batch,S)
         '''
-        length = len(x)
+        if len(x.shape) != 0:
+            length = len(x)
+        else:
+            x = [x]
+            length = 1
 
         output = self.embed.forward(x)
         #Average of words
         output = np.sum(output, axis = 0, keepdims = True)/length
         output = self.hidden.forward(output)
         output = self.output_layer.forward(output)
-
         return output
 
     def backward(self, dev, lr):

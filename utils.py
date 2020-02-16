@@ -24,6 +24,7 @@ def plot(acc_stack, loss_stack, epochs):
 def evaluate(dev, model):
     total = len(dev)
     score = 0
+    to = 0
 
     for i in range(total):
         length = dev[i, -2]
@@ -31,7 +32,6 @@ def evaluate(dev, model):
         y = dev[i, -1] - 1
 
         y_val = np.argmax(model.forward(x), axis = 1) 
-        if y == y_val[0]:
-            score += 1
-
+        score += len(y_val[y_val == y])
+        to += length
     return score / total
