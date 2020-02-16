@@ -22,7 +22,10 @@ def make_corpus(data):
     return word2idx
 
 def word_to_id(data, word2idx, label):
-
+    '''
+    data = ["title", "description"] => (total_size, 1, 1)
+    train_data = [word_id + length + class] => (total_size, max_length + 2)
+    '''
     stack = []
     for lines in data:
         words = []
@@ -50,7 +53,17 @@ def word_to_id(data, word2idx, label):
     return train_data
 
 
-#def get_train_batch(data):
+def get_mini_pad(train_data, target, batch_size):
+
+    seed = np.random.choice(len(train_data), batch_size)
+    batch_data = train_data[seed, :]
+    length = batch_data[seed,-1]
+
+    max_length = max(length)
+
+    batch_data = batch_data[:, :max_length]
+    
+    return batch_data, target[seed]
 
 
 def make_subwords_corpus(n_grams):
