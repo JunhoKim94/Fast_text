@@ -21,7 +21,7 @@ def make_corpus(data):
             word2idx[word] = len(word2idx)
     return word2idx
 
-def word_to_id(data, word2idx):
+def word_to_id(data, word2idx, label):
 
     stack = []
     for lines in data:
@@ -30,7 +30,8 @@ def word_to_id(data, word2idx):
             temp = line.split()
             for word in temp:
                 if word not in word2idx:
-                    words += [word2idx["UNK"]]
+                    #words += [word2idx["UNK"]]
+                    continue
                 else:
                     words += [word2idx[word]]
 
@@ -39,11 +40,12 @@ def word_to_id(data, word2idx):
     length = [len(s) for s in stack]
     max_length = max(length)
 
-    train_data = np.zeros((len(data), max_length + 1), dtype = np.int32)
+    train_data = np.zeros((len(data), max_length + 2), dtype = np.int32)
 
     for i in tqdm(range(len(data))):
         train_data[i, :length[i]] = stack[i]
-        train_data[i, -1] = length[i]
+        train_data[i, -2] = length[i]
+        train_data[i, -1] = label[i]
 
     return train_data
 
@@ -51,7 +53,7 @@ def word_to_id(data, word2idx):
 #def get_train_batch(data):
 
 
-def make_ngram_corpus(n_grams):
+def make_subwords_corpus(n_grams):
 
     def make_subword(n_grams):
         alphabet = [chr(i) for i in range(ord('a'),ord('z')+1)]
