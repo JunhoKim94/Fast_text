@@ -10,10 +10,10 @@ from utils import plot, evaluate
 
 path = "./data/ag_news/train.csv"
 path = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/train.csv"
-path2 = "./data/ag_news/test.csv"
+path2 = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/test.csv"
 
 data = pd.read_csv(path2, header = None)
-
+data = data.fillna(" ")
 test_label = np.array(data.iloc[:,0])
 test_data = np.array(data.iloc[:,1:])
 
