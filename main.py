@@ -9,13 +9,19 @@ import matplotlib.pyplot as plt
 from utils import plot, evaluate
 
 path = "./data/ag_news/train.csv"
-data = pd.read_csv(path, header = None)
+path = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/train.csv"
+path2 = "./data/ag_news/test.csv"
 
-label = np.array(data.iloc[:,0])
-train_data = np.array(data.iloc[:,1:])
+data = pd.read_csv(path2, header = None)
 
-word2idx = make_corpus(train_data)
+test_label = np.array(data.iloc[:,0])
+test_data = np.array(data.iloc[:,1:])
+
+
+word2idx, train_data, label  =  make_corpus(path)
+
 data = word_to_id(train_data, word2idx, label)
+test_data = word_to_id(test_data, word2idx, test_label)
 
 vocab_size = len(word2idx)
 class_num = 4
@@ -23,12 +29,6 @@ epochs = 10
 total_word = len(train_data)
 lr = 0.001
 #batch_size = 100
-
-def gen_train(data, val_ratio = 0.1):
-    np.random.shuffle(data)
-    num = int(val_ratio * len(data))
-
-    return data[num:], data[:num]
 
 train_data, val_data = gen_train(data)
 
@@ -65,10 +65,9 @@ for epoch in range(epochs + 1):
     acc_stack.append(score)
 
     if (epoch % 1 == 0):
+        test_score = evaluate(test_data, model)
         curr_time = time.time()
-        print(f"loss = {loss}  |  epoch  = {epoch}  | total_word = {total_word}  | time_spend = {curr_time - st} | val_score = {score}")
-
-    
+        print(f"loss = {epoch_loss}  |  epoch  = {epoch}  | total_word = {total_word}  | time_spend = {curr_time - st} | val_score = {score}  | lr = {lr}")
 
 
 plot(acc_stack, loss_stack, epochs)

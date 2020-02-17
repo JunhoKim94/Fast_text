@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 def plot(acc_stack, loss_stack, epochs):
     a = [i for i in range(epochs + 1)]
     
-    plt.figure(figsize = (10,8))
+    #plt.figure(figsize = (10,8))
     fig , ax1 = plt.subplots()
     ax2 = ax1.twinx()
     acc = ax1.plot(a, acc_stack, 'r', label = 'Accuracy')

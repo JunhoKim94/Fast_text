@@ -1,17 +1,23 @@
 import numpy as np
 from tqdm import tqdm
+import pandas as pd
+import collections
 '''
 word ==> subwords ==> summation(hidden) 이 추가된 word2vec = Fasttext
          BFS 이용subword 추출
 '''
-def make_corpus(data):
+def make_corpus(path):
     '''
     Basic word2idx : ignore frequency, only word --> id
     data = number_of_data x 2 (title, description)
     '''
+    data = pd.read_csv(path, header = None, encoding= 'utf-8')
+    data = data.fillna(" ")
+    label = np.array(data.iloc[:,0])
+    train_data = np.array(data.iloc[:,1:])
 
     words = []
-    for lines in data:
+    for lines in tqdm(train_data):
         for line in lines:
             words += line.split()
         
@@ -19,7 +25,8 @@ def make_corpus(data):
     for word in words:
         if word not in word2idx:
             word2idx[word] = len(word2idx)
-    return word2idx
+            
+    return word2idx, train_data, label
 
 def word_to_id(data, word2idx, label):
     '''
@@ -124,9 +131,8 @@ def subwords2idx(sub_words, corpus):
 
     return ret
 
-if __name__ == "__main__":
-    sub = make_corpus(3)
-    corpus = corpus_to_hash(sub)
-    x, sub_id = word2subwords("concatenate", 3, corpus)
-    #sub_id = subwords2idx(x, corpus)
-    print(x, sub_id)
+def gen_train(data, val_ratio = 0.1):
+    np.random.shuffle(data)
+    num = int(val_ratio * len(data))
+
+    return data[num:], data[:num]
