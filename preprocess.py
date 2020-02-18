@@ -2,31 +2,55 @@ import numpy as np
 from tqdm import tqdm
 import pandas as pd
 import collections
+import re
+
 '''
 word ==> subwords ==> summation(hidden) 이 추가된 word2vec = Fasttext
          BFS 이용subword 추출
 '''
+def split_file(path, number):
+    data = pd.read_csv(path, header = None, encoding= 'utf-8')
+    data = data.fillna(" ")
+
+    total = len(data)
+    batch = total // number
+
+    for i in range(number):
+        data.iloc[i *batch : (i+1) * batch + 1].to_csv(path[:-4] + "%d.csv"%i, header = False, index = False) 
+
 def make_corpus(path):
     '''
     Basic word2idx : ignore frequency, only word --> id
     data = number_of_data x 2 (title, description)
-    '''
-    data = pd.read_csv(path, header = None, encoding= 'utf-8')
-    data = data.fillna(" ")
-    label = np.array(data.iloc[:,0])
-    train_data = np.array(data.iloc[:,1:])
+    
+    #data = pd.read_csv(path, header = None, encoding= 'utf-8')
+    #data = data.fillna(" ")
 
+    #label = np.array(data.iloc[:,0])
+    #train_data = np.array(data.iloc[:,1:])
+    
     words = []
     for lines in tqdm(train_data):
         for line in lines:
             words += line.split()
+    '''
+    words = []
+    with open(path, 'r', encoding = 'utf-8') as f:
+        lines = f.readlines()
+        for line in tqdm(lines):
+            temp = line[1:].split("\",\"")
+            for sen in temp[1:]:
+                sen = sen.strip()
+                sen = clean_str(sen, True)                
+                words += sen.split()
         
     word2idx = {"UNK" : 0}
     for word in words:
         if word not in word2idx:
             word2idx[word] = len(word2idx)
             
-    return word2idx, train_data, label
+    return word2idx
+
 
 def word_to_id(data, word2idx, label):
     '''
@@ -59,6 +83,18 @@ def word_to_id(data, word2idx, label):
 
     return train_data
 
+def get_train_words(path):
+    train_word = []
+    label = []
+    with open(path, 'r', encoding = 'utf-8') as f:
+        lines = f.readlines()
+        for line in tqdm(lines):
+            label += [int(line[0])]
+            line = line[2:].strip()
+            line = clean_str(line, True)
+            train_word.append(line.split())
+
+    return train_word, np.array(label)
 
 def get_mini_pad(train_data, target, batch_size):
 
@@ -136,3 +172,23 @@ def gen_train(data, val_ratio = 0.1):
     num = int(val_ratio * len(data))
 
     return data[num:], data[:num]
+
+def clean_str(string, TREC=False):
+    """
+    Tokenization/string cleaning for all datasets except for SST.
+    Every dataset is lower cased except for TREC
+    """
+    string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)     
+    string = re.sub(r"\'s", " \'s", string) 
+    string = re.sub(r"\'ve", " \'ve", string) 
+    string = re.sub(r"n\'t", " n\'t", string) 
+    string = re.sub(r"\'re", " \'re", string) 
+    string = re.sub(r"\'d", " \'d", string) 
+    string = re.sub(r"\'ll", " \'ll", string) 
+    string = re.sub(r",", " , ", string) 
+    string = re.sub(r"!", " ! ", string) 
+    string = re.sub(r"\(", " \( ", string) 
+    string = re.sub(r"\)", " \) ", string) 
+    string = re.sub(r"\?", " \? ", string) 
+    string = re.sub(r"\s{2,}", " ", string)    
+    return string.strip() if TREC else string.strip().lower()
