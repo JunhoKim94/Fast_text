@@ -3,6 +3,7 @@ from tqdm import tqdm
 import pandas as pd
 import collections
 import re
+import pickle
 
 '''
 word ==> subwords ==> summation(hidden) 이 추가된 word2vec = Fasttext
@@ -48,6 +49,9 @@ def make_corpus(path):
     for word in words:
         if word not in word2idx:
             word2idx[word] = len(word2idx)
+
+    with open("./corpus.pickle", "wb") as f:
+        pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
             
     return word2idx
 
@@ -61,6 +65,8 @@ def word_to_id(data, word2idx, label):
     for lines in data:
         words = []
         for line in lines:
+            #line = line.strip()
+            #line = clean_str(line, True)
             temp = line.split()
             for word in temp:
                 if word not in word2idx:
@@ -76,19 +82,19 @@ def word_to_id(data, word2idx, label):
 
     train_data = np.zeros((len(data), max_length + 2), dtype = np.int32)
 
-    for i in tqdm(range(len(data))):
+    for i in range(len(data)):
         train_data[i, :length[i]] = stack[i]
         train_data[i, -2] = length[i]
         train_data[i, -1] = label[i]
 
     return train_data
 
-def get_train_words(path):
+def get_words(path):
     train_word = []
     label = []
     with open(path, 'r', encoding = 'utf-8') as f:
         lines = f.readlines()
-        for line in tqdm(lines):
+        for line in lines:
             label += [int(line[0])]
             line = line[2:].strip()
             line = clean_str(line, True)
@@ -96,17 +102,18 @@ def get_train_words(path):
 
     return train_word, np.array(label)
 
-def get_mini_pad(train_data, target, batch_size):
+def get_mini_pad(train_data, batch_size):
 
     seed = np.random.choice(len(train_data), batch_size)
     batch_data = train_data[seed, :]
-    length = batch_data[seed,-1]
-
+    length = batch_data[:,-2]
+    target = batch_data[:,-1]
+    
     max_length = max(length)
-
+    #print(max_length)
     batch_data = batch_data[:, :max_length]
     
-    return batch_data, target[seed]
+    return batch_data, target - 1
 
 
 def make_subwords_corpus(n_grams):
