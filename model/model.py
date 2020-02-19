@@ -17,6 +17,7 @@ class Fasttext:
         for layer in self.layer:
             self.params += layer.params
             self.grads += layer.grads
+            
     def forward(self, x):
         '''
         x = list of vocab(index) = (batch,S)

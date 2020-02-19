@@ -17,7 +17,6 @@ data = data.fillna(" ")
 test_label = np.array(data.iloc[:,0])
 test_data = np.array(data.iloc[:,1:])
 
-
 word2idx, train_data, label  =  make_corpus(path)
 
 data = word_to_id(train_data, word2idx, label)
@@ -48,7 +47,6 @@ for epoch in range(epochs + 1):
         x_train = train_data[iteration,:length]
         y_train = train_data[iteration,-1] - 1
 
-            
         y_pred = model.forward(x_train)
         loss = criterion.forward(y_pred, y_train)
         epoch_loss += loss
