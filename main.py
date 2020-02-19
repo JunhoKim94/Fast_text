@@ -17,26 +17,28 @@ print(torch.cuda.is_available())
 
 number = 5
 
-#path = "./data/ag_news/train.csv"
-path = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/train.csv"
-#path2 = "./data/ag_news/test.csv"
-path2 = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/test.csv"
+path = "./data/ag_news/train.csv"
+#path = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/train.csv"
+path2 = "./data/ag_news/test.csv"
+#path2 = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/test.csv"
 #split_file(path, number)
 
-with open("./corpus.pickle", 'rb') as f:
-    word2idx = pickle.load(f)
+word2idx = make_corpus(path, True)
+print(word2idx)
+#with open("./corpus.pickle", 'rb') as f:
+#    word2idx = pickle.load(f)
 
 #word2idx  =  make_corpus(path)
-test_data, test_label = get_words(path2)
-test_data = word_to_id(test_data, word2idx, test_label)
+#test_data = get_words(path2)
+test_data = word_to_id(path2, word2idx, True)
 
 vocab_size = len(word2idx)
 class_num = 10
 epochs = 10
 learning_rate = 0.001
 batch_size = 300
-file_path = [path[:-4] + "%d.csv"%i for i in range(number)]
-
+#file_path = [path[:-4] + "%d.csv"%i for i in range(number)]
+file_path = [path]
 
 def train_np(vocab_size, class_num, epochs, learning_rate, file_path, test_data, word2idx):
     learning_rate = 0.001
@@ -52,36 +54,34 @@ def train_np(vocab_size, class_num, epochs, learning_rate, file_path, test_data,
 
     for epoch in range(epochs + 1):
         learning_rate *= (0.95)**(epoch)
-        for path in file_path:
-            train_data,  label = get_words(path)
-            train_data = word_to_id(train_data, word2idx, label)
-            total_word = len(train_data)
+        train_data = word_to_id(path, word2idx)
+        total_word = len(train_data)
             
-            for iteration in range(len(train_data)):
-                length = train_data[iteration,-2]
-                x_train = train_data[iteration,:length]
-                y_train = train_data[iteration,-1] - 1
+        for iteration in range(len(train_data)):
+            length = train_data[iteration,-2]
+            x_train = train_data[iteration,:length]
+            y_train = train_data[iteration,-1] - 1
 
-                    
-                y_pred = model.forward(x_train)
-                loss = criterion.forward(y_pred, y_train)
-                epoch_loss += loss
+                
+            y_pred = model.forward(x_train)
+            loss = criterion.forward(y_pred, y_train)
+            epoch_loss += loss
 
-                d_out = criterion.backward()
-                model.backward(d_out, learning_rate)
+            d_out = criterion.backward()
+            model.backward(d_out, learning_rate)
 
-                #optimizer.update(model.params, model.grads)
-                #optimizer._zero_grad(model.grads)
-            
-            epoch_loss /= len(train_data)
-            loss_stack.append(epoch_loss)
-            score = evaluate(test_data, model)
-            acc_stack.append(score)
+            #optimizer.update(model.params, model.grads)
+            #optimizer._zero_grad(model.grads)
+        
+        epoch_loss /= len(train_data)
+        loss_stack.append(epoch_loss)
+        score = evaluate(test_data, model)
+        acc_stack.append(score)
 
-            if (epoch % 1 == 0):
-                test_score = evaluate(test_data, model)
-                curr_time = time.time()
-                print(f"loss = {epoch_loss}  |  epoch  = {epoch}  | total_word = {total_word}  | time_spend = {curr_time - st} | val_score = {score}  | lr = {learning_rate}")
+        if (epoch % 1 == 0):
+            test_score = evaluate(test_data, model)
+            curr_time = time.time()
+            print(f"loss = {epoch_loss}  |  epoch  = {epoch}  | total_word = {total_word}  | time_spend = {curr_time - st} | val_score = {score}  | lr = {learning_rate}")
 
     return acc_stack, loss_stack
 
@@ -102,42 +102,40 @@ def train_torch(vocab_size, class_num, epochs, batch_size, learning_rate, file_p
     acc_stack = []
     tot = 0
     for epoch in range(epochs + 1):
-        for path in file_path:
-            train_data,  label = get_words(path)
-            train_data = word_to_id(train_data, word2idx, label)
-            total_word = len(train_data)
-            tot += total_word
-            for iteration in range(len(train_data)// batch_size):
-                x_train, y_train = get_mini_pad(train_data, batch_size)
+        train_data = word_to_id(path, word2idx)
+        total_word = len(train_data)
+        tot += total_word
+        for iteration in range(len(train_data)// batch_size):
+            x_train, y_train = get_mini_pad(train_data, batch_size)
 
-                x_train = torch.Tensor(x_train).to(torch.long).to(device)
-                y_train = torch.Tensor(y_train).to(torch.long).to(device)
+            x_train = torch.Tensor(x_train).to(torch.long).to(device)
+            y_train = torch.Tensor(y_train).to(torch.long).to(device)
 
-                y_pred = model(x_train)
-                optimizer.zero_grad()
-                loss = criterion(y_pred, y_train)
+            y_pred = model(x_train)
+            optimizer.zero_grad()
+            loss = criterion(y_pred, y_train)
 
-                loss.backward()
-                optimizer.step()
+            loss.backward()
+            optimizer.step()
 
-                epoch_loss += loss.item()
-                if iteration % 100 == 0:
-                    print(f"loss = {loss.item()}  |  iteration : {iteration}  | total iteration : {total_word // batch_size}")
-        epoch_loss /= tot+1
-        loss_stack.append(epoch_loss)
-        
-        x_test, y_test = get_mini_pad(test_data, batch_size)
-        x_test, y_test = torch.Tensor(x_test).to(torch.long).to(device), torch.Tensor(y_test).to(torch.long).to(device)
-        y_val  = torch.argmax(torch.nn.functional.softmax(model(x_test),dim = 1),dim = 1)
-        score = len(y_test[y_test == y_val]) / len(y_test)
-        #score = evaluate(test_data, model)
-        #acc_stack.append(score)
-
-        if (epoch % 1 == 0):
-            #test_score = evaluate(test_data, model)
-            curr_time = time.time()
-            print(f"loss = {epoch_loss}  |  epoch  = {epoch}  | total_word = {total_word}  | time_spend = {curr_time - st} | val_score = {score}  | lr = {learning_rate}")
+            epoch_loss += loss.item()
+            if iteration % 100 == 0:
+                print(f"loss = {loss.item()}  |  iteration : {iteration}  | total iteration : {total_word // batch_size}")
+    epoch_loss /= tot+1
+    loss_stack.append(epoch_loss)
     
+    x_test, y_test = get_mini_pad(test_data, batch_size)
+    x_test, y_test = torch.Tensor(x_test).to(torch.long).to(device), torch.Tensor(y_test).to(torch.long).to(device)
+    y_val  = torch.argmax(torch.nn.functional.softmax(model(x_test),dim = 1),dim = 1)
+    score = len(y_test[y_test == y_val]) / len(y_test)
+    #score = evaluate(test_data, model)
+    #acc_stack.append(score)
+
+    if (epoch % 1 == 0):
+        #test_score = evaluate(test_data, model)
+        curr_time = time.time()
+        print(f"loss = {epoch_loss}  |  epoch  = {epoch}  | total_word = {total_word}  | time_spend = {curr_time - st} | val_score = {score}  | lr = {learning_rate}")
+
     return acc_stack, loss_stack
 
 if __name__ == "__main__":

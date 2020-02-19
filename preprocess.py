@@ -19,21 +19,10 @@ def split_file(path, number):
     for i in range(number):
         data.iloc[i *batch : (i+1) * batch + 1].to_csv(path[:-4] + "%d.csv"%i, header = False, index = False) 
 
-def make_corpus(path):
+def make_corpus(path, n_grams = None):
     '''
     Basic word2idx : ignore frequency, only word --> id
-    data = number_of_data x 2 (title, description)
-    
-    #data = pd.read_csv(path, header = None, encoding= 'utf-8')
-    #data = data.fillna(" ")
-
-    #label = np.array(data.iloc[:,0])
-    #train_data = np.array(data.iloc[:,1:])
-    
-    words = []
-    for lines in tqdm(train_data):
-        for line in lines:
-            words += line.split()
+    data = number_of_data x n (title, description, ...)
     '''
     words = []
     with open(path, 'r', encoding = 'utf-8') as f:
@@ -44,36 +33,45 @@ def make_corpus(path):
                 sen = sen.strip()
                 sen = clean_str(sen, True)                
                 words += sen.split()
-        
-    word2idx = {"UNK" : 0}
-    for word in words:
-        if word not in word2idx:
-            word2idx[word] = len(word2idx)
 
-    with open("./corpus.pickle", "wb") as f:
-        pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
+    word2idx = {"UNK" : 0}
+    temp = words[0]
+    for word in words[1:]:
+        gram = (temp + word) if n_grams else word
+        temp = word
+        if gram not in word2idx:
+            word2idx[gram] = len(word2idx)
+
+    #with open("./corpus.pickle", "wb") as f:
+        #pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
             
     return word2idx
 
 
-def word_to_id(data, word2idx, label):
+def word_to_id(path, word2idx, n_grams = False):
     '''
     data = ["title", "description"] => (total_size, 1, 1)
     train_data = [word_id + length + class] => (total_size, max_length + 2)
     '''
+    with open(path, 'r', encoding = 'utf-8') as f:
+        data = []
+        label = []
+        for line in f.readlines():
+            label.append(int(clean_str(line[:4])))
+            data.append(clean_str(line[4:]).split())
+
     stack = []
-    for lines in data:
+    for line in data:
         words = []
-        for line in lines:
-            #line = line.strip()
-            #line = clean_str(line, True)
-            temp = line.split()
-            for word in temp:
-                if word not in word2idx:
-                    #words += [word2idx["UNK"]]
-                    continue
-                else:
-                    words += [word2idx[word]]
+        temp = line[0]
+        for word in line[1:]:
+            gram = temp + word if n_grams else word
+            temp = word
+            if gram not in word2idx:
+                #words += [word2idx["UNK"]]
+                continue
+            else:
+                words += [word2idx[gram]]
 
         stack.append(words)
 
@@ -95,9 +93,8 @@ def get_words(path):
     with open(path, 'r', encoding = 'utf-8') as f:
         lines = f.readlines()
         for line in lines:
-            label += [int(line[0])]
-            line = line[2:].strip()
             line = clean_str(line, True)
+            label += [int(line[0])]
             train_word.append(line.split())
 
     return train_word, np.array(label)
@@ -180,7 +177,7 @@ def gen_train(data, val_ratio = 0.1):
 
     return data[num:], data[:num]
 
-def clean_str(string, TREC=False):
+def clean_str(string, TREC=True):
     """
     Tokenization/string cleaning for all datasets except for SST.
     Every dataset is lower cased except for TREC
@@ -192,10 +189,11 @@ def clean_str(string, TREC=False):
     string = re.sub(r"\'re", " \'re", string) 
     string = re.sub(r"\'d", " \'d", string) 
     string = re.sub(r"\'ll", " \'ll", string) 
-    string = re.sub(r",", " , ", string) 
+    string = re.sub(r",", " ", string) 
     string = re.sub(r"!", " ! ", string) 
     string = re.sub(r"\(", " \( ", string) 
     string = re.sub(r"\)", " \) ", string) 
     string = re.sub(r"\?", " \? ", string) 
-    string = re.sub(r"\s{2,}", " ", string)    
+    string = re.sub(r"\s{2,}", " ", string)
+    string = re.sub(r"\"", "", string)
     return string.strip() if TREC else string.strip().lower()
