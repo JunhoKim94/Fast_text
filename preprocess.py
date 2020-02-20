@@ -28,11 +28,10 @@ def make_corpus(path, n_grams = None):
     with open(path, 'r', encoding = 'utf-8') as f:
         lines = f.readlines()
         for line in tqdm(lines):
-            temp = line[1:].split("\",\"")
-            for sen in temp[1:]:
-                sen = sen.strip()
-                sen = clean_str(sen, True)                
-                words += sen.split()
+            sen = line[4:]
+            sen = sen.strip()
+            sen = clean_str(sen, True)                
+            words += sen.split()
 
     word2idx = {"UNK" : 0}
     temp = words[0]
@@ -41,10 +40,10 @@ def make_corpus(path, n_grams = None):
         temp = word
         if gram not in word2idx:
             word2idx[gram] = len(word2idx)
-
+    
     with open("./corpus.pickle", "wb") as f:
         pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
-            
+        
     return word2idx
 
 
@@ -59,6 +58,7 @@ def word_to_id(data, label, word2idx, n_grams = False):
         line = lines.split()
         words = []
         temp = line[0]
+        print(temp)
         for word in line[1:]:
             gram = temp + word if n_grams else word
             temp = word

@@ -49,13 +49,14 @@ class Ce_losswithsoftmax:
         self.y_pred = softmax(y_pred)
         self.target = target
 
-        self.loss = -np.log(self.y_pred[:,self.target] + self.eps)
+
+        self.loss = -np.log(self.y_pred[0,self.target] + self.eps)
 
         self.loss = np.sum(self.loss)
 
         return self.loss
     def backward(self):
-        self.y_pred[:,self.target] -= 1
+        self.y_pred[0,self.target] -= 1
 
         return self.y_pred
 

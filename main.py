@@ -19,14 +19,14 @@ number = 5
 n_grams = False
 
 #path = "./data/ag_news/train.csv"
-path = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/train.csv"
+path = "C:/Users/dilab/Desktop/A. Multi-Class/amazon_review_polarity_csv/train.csv"
 #path2 = "./data/ag_news/test.csv"
-path2 = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/test.csv"
+path2 = "C:/Users/dilab/Desktop/A. Multi-Class/amazon_review_polarity_csv/test.csv"
 #split_file(path, number)
 
-#word2idx = make_corpus(path, n_grams)
-with open("./corpus.pickle", 'rb') as f:
-    word2idx = pickle.load(f)
+word2idx = make_corpus(path, n_grams)
+#with open("./corpus.pickle", 'rb') as f:
+#    word2idx = pickle.load(f)
 
 #word2idx  =  make_corpus(path)
 #test_data = get_words(path2)
@@ -34,7 +34,7 @@ test_data, test_label = get_sentence(path2)
 test_data = word_to_id(test_data, test_label , word2idx, n_grams)
 
 vocab_size = len(word2idx)
-class_num = 10
+class_num = 2
 epochs = 10
 learning_rate = 0.001
 batch_size = 3000
