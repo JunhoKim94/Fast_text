@@ -50,7 +50,7 @@ class Ce_losswithsoftmax:
         self.target = target
 
         self.loss = -np.log(self.y_pred[:,self.target] + self.eps)
-        
+
         self.loss = np.sum(self.loss)
 
         return self.loss

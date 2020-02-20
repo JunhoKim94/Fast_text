@@ -37,7 +37,7 @@ vocab_size = len(word2idx)
 class_num = 10
 epochs = 10
 learning_rate = 0.001
-batch_size = 2000
+batch_size = 3000
 #file_path = [path[:-4] + "%d.csv"%i for i in range(number)]
 file_path = [path]
 
@@ -62,6 +62,7 @@ def train_np(vocab_size, class_num, epochs, learning_rate, file_path, test_data,
         epoch_loss = 0
         for iteration in range(total_word // batch_size):
             train_data = word_to_id(data[iteration * batch_size : (iteration + 1)*batch_size], label[iteration * batch_size : (iteration + 1)*batch_size], word2idx, n_grams)
+            #print(train_data, train_data.shape)
             for i in range(batch_size):
 
                 length = train_data[i,-2]
@@ -78,7 +79,7 @@ def train_np(vocab_size, class_num, epochs, learning_rate, file_path, test_data,
 
                 #optimizer.update(model.params, model.grads)
                 #optimizer._zero_grad(model.grads)
-            
+
         epoch_loss /= len(data)
         loss_stack.append(epoch_loss)
         score = evaluate(test_data, model)
