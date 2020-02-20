@@ -16,27 +16,28 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
 
 number = 5
+n_grams = False
 
-path = "./data/ag_news/train.csv"
-#path = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/train.csv"
-path2 = "./data/ag_news/test.csv"
-#path2 = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/test.csv"
+#path = "./data/ag_news/train.csv"
+path = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/train.csv"
+#path2 = "./data/ag_news/test.csv"
+path2 = "C:/Users/dilab/Desktop/A. Multi-Class/yahoo_answers_csv/test.csv"
 #split_file(path, number)
 
-word2idx = make_corpus(path, True)
-print(word2idx)
-#with open("./corpus.pickle", 'rb') as f:
-#    word2idx = pickle.load(f)
+#word2idx = make_corpus(path, n_grams)
+with open("./corpus.pickle", 'rb') as f:
+    word2idx = pickle.load(f)
 
 #word2idx  =  make_corpus(path)
 #test_data = get_words(path2)
-test_data = word_to_id(path2, word2idx, True)
+test_data, test_label = get_sentence(path2)
+test_data = word_to_id(test_data, test_label , word2idx, n_grams)
 
 vocab_size = len(word2idx)
 class_num = 10
 epochs = 10
 learning_rate = 0.001
-batch_size = 300
+batch_size = 2000
 #file_path = [path[:-4] + "%d.csv"%i for i in range(number)]
 file_path = [path]
 
@@ -48,32 +49,37 @@ def train_np(vocab_size, class_num, epochs, learning_rate, file_path, test_data,
 
     st = time.time()
 
-    epoch_loss = 0
+
     loss_stack = []
     acc_stack = []
+    data, label = get_sentence(path)
+    total_word = len(data)
 
     for epoch in range(epochs + 1):
         learning_rate *= (0.95)**(epoch)
-        train_data = word_to_id(path, word2idx)
-        total_word = len(train_data)
-            
-        for iteration in range(len(train_data)):
-            length = train_data[iteration,-2]
-            x_train = train_data[iteration,:length]
-            y_train = train_data[iteration,-1] - 1
-
-                
-            y_pred = model.forward(x_train)
-            loss = criterion.forward(y_pred, y_train)
-            epoch_loss += loss
-
-            d_out = criterion.backward()
-            model.backward(d_out, learning_rate)
-
-            #optimizer.update(model.params, model.grads)
-            #optimizer._zero_grad(model.grads)
         
-        epoch_loss /= len(train_data)
+        #메모리 할당을 위한 batch
+        epoch_loss = 0
+        for iteration in range(total_word // batch_size):
+            train_data = word_to_id(data[iteration * batch_size : (iteration + 1)*batch_size], label[iteration * batch_size : (iteration + 1)*batch_size], word2idx, n_grams)
+            for i in range(batch_size):
+
+                length = train_data[i,-2]
+                x_train = train_data[i,:length]
+                y_train = train_data[i,-1] - 1
+
+                    
+                y_pred = model.forward(x_train)
+                loss = criterion.forward(y_pred, y_train)
+                epoch_loss += loss
+
+                d_out = criterion.backward()
+                model.backward(d_out, learning_rate)
+
+                #optimizer.update(model.params, model.grads)
+                #optimizer._zero_grad(model.grads)
+            
+        epoch_loss /= len(data)
         loss_stack.append(epoch_loss)
         score = evaluate(test_data, model)
         acc_stack.append(score)
@@ -100,12 +106,18 @@ def train_torch(vocab_size, class_num, epochs, batch_size, learning_rate, file_p
     epoch_loss = 0
     loss_stack = []
     acc_stack = []
-    tot = 0
+   
+    data, label = get_sentence(path)
+    total_word = len(data)
+
     for epoch in range(epochs + 1):
-        train_data = word_to_id(path, word2idx)
-        total_word = len(train_data)
-        tot += total_word
-        for iteration in range(len(train_data)// batch_size):
+        learning_rate *= (0.95)**(epoch)
+        
+        #메모리 할당을 위한 batch
+        
+        epoch_loss = 0
+        for iteration in range(total_word // batch_size):
+            train_data = word_to_id(data[iteration * batch_size : (iteration + 1)*batch_size], label[iteration * batch_size : (iteration + 1)*batch_size], word2idx, n_grams)
             x_train, y_train = get_mini_pad(train_data, batch_size)
 
             x_train = torch.Tensor(x_train).to(torch.long).to(device)
@@ -121,7 +133,7 @@ def train_torch(vocab_size, class_num, epochs, batch_size, learning_rate, file_p
             epoch_loss += loss.item()
             if iteration % 100 == 0:
                 print(f"loss = {loss.item()}  |  iteration : {iteration}  | total iteration : {total_word // batch_size}")
-    epoch_loss /= tot+1
+    epoch_loss /= total_word+1
     loss_stack.append(epoch_loss)
     
     x_test, y_test = get_mini_pad(test_data, batch_size)

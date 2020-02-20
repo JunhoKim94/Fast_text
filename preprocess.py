@@ -42,26 +42,21 @@ def make_corpus(path, n_grams = None):
         if gram not in word2idx:
             word2idx[gram] = len(word2idx)
 
-    #with open("./corpus.pickle", "wb") as f:
-        #pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
+    with open("./corpus.pickle", "wb") as f:
+        pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
             
     return word2idx
 
 
-def word_to_id(path, word2idx, n_grams = False):
+def word_to_id(data, label, word2idx, n_grams = False):
     '''
     data = ["title", "description"] => (total_size, 1, 1)
     train_data = [word_id + length + class] => (total_size, max_length + 2)
     '''
-    with open(path, 'r', encoding = 'utf-8') as f:
-        data = []
-        label = []
-        for line in f.readlines():
-            label.append(int(clean_str(line[:4])))
-            data.append(clean_str(line[4:]).split())
 
     stack = []
-    for line in data:
+    for lines in data:
+        line = lines.split()
         words = []
         temp = line[0]
         for word in line[1:]:
@@ -84,20 +79,19 @@ def word_to_id(path, word2idx, n_grams = False):
         train_data[i, :length[i]] = stack[i]
         train_data[i, -2] = length[i]
         train_data[i, -1] = label[i]
-
     return train_data
 
-def get_words(path):
+def get_sentence(path):
     train_word = []
     label = []
     with open(path, 'r', encoding = 'utf-8') as f:
-        lines = f.readlines()
-        for line in lines:
-            line = clean_str(line, True)
-            label += [int(line[0])]
-            train_word.append(line.split())
+        data = []
+        label = []
+        for line in tqdm(f.readlines()):
+            label.append(int(clean_str(line[:4])))
+            data.append(clean_str(line[4:]))
 
-    return train_word, np.array(label)
+    return data, np.array(label)
 
 def get_mini_pad(train_data, batch_size):
 
