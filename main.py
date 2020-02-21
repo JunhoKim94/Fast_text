@@ -148,7 +148,7 @@ def train_torch(vocab_size, class_num, epochs, batch_size, learning_rate, file_p
         #test_score = evaluate(test_data, model)
         curr_time = time.time()
         print(f"loss = {epoch_loss}  |  epoch  = {epoch}  | total_word = {total_word}  | time_spend = {curr_time - st} | val_score = {score}  | lr = {learning_rate}")
-
+        del epoch_loss, epoch, x_train, y_train, x_test, y_test, y_val, y_pred, loss
     return acc_stack, loss_stack
 
 if __name__ == "__main__":

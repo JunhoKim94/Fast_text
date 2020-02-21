@@ -56,6 +56,8 @@ def word_to_id(data, label, word2idx, n_grams = False):
     stack = []
     for lines in data:
         line = lines.split()
+        if len(line) < 2:
+            continue
         words = []
         temp = line[0]
         print(temp)
@@ -73,9 +75,9 @@ def word_to_id(data, label, word2idx, n_grams = False):
     length = [len(s) for s in stack]
     max_length = max(length)
 
-    train_data = np.zeros((len(data), max_length + 2), dtype = np.int32)
+    train_data = np.zeros((len(stack), max_length + 2), dtype = np.int32)
 
-    for i in range(len(data)):
+    for i in range(len(stack)):
         train_data[i, :length[i]] = stack[i]
         train_data[i, -2] = length[i]
         train_data[i, -1] = label[i]
