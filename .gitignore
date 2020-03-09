@@ -1,7 +1,11 @@
 .vscode/*
 .idea/*
 __pycache__/*
-1-billion-word/*
 bestmodel.pickle
 .vscode
 __pycache__
+*.csv
+*.txt
+*.ipynb
+*.pyc
+*.pickle

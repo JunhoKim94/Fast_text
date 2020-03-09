@@ -16,8 +16,8 @@ def make_corpus(path, n_grams = None):
         lines = f.readlines()
         for line in tqdm(lines):
             sen = line[4:]
-            sen = sen.strip()
-            sen = clean_str(sen, True)                
+            #sen = sen.strip()
+            sen = clean_str(sen, True)            
             words += [sen]
             label += [int(clean_str(line[:4]))]
     word2idx = {"UNK" : 0}
@@ -42,19 +42,20 @@ def word_to_id(data, label, word2idx, n_grams = False):
 
     stack = []
     for lines in data:
-        line = lines.split()
-        if len(line) < 2:
+        lines = lines.split()
+        if len(lines) < 1:
             continue
         words = []
         if n_grams:
-            line += ['%s_%s' % (line[index],line[index+1]) for index in range(len(line)-1)]
-        for word in line:
-            if (word in word2idx) and n_grams:
+            lines += ['%s_%s' % (lines[index],lines[index+1]) for index in range(len(lines)-1)]
+        for word in lines:
+            if word in word2idx:
                 words += [word2idx[word]]
 
         stack.append(words)
 
     length = [len(s) for s in stack]
+    #print(length)
     max_length = max(length)
 
     train_data = np.zeros((len(stack), max_length + 2), dtype = np.int32)
@@ -75,9 +76,9 @@ def get_sentence(path):
             label.append(int(clean_str(line[:4])))
             data.append(clean_str(line[4:]))
 
-    return data, np.array(label)
+    return data, label
 
-def get_mini_pad(train_data, batch_size):
+def get_mini_pad(train_data, batch_size, max_len):
 
     seed = np.random.choice(len(train_data), batch_size)
     batch_data = train_data[seed, :]
@@ -85,6 +86,8 @@ def get_mini_pad(train_data, batch_size):
     target = batch_data[:,-1]
     
     max_length = max(length)
+    if max_length > max_len:
+        max_length = max_len
     #print(max_length)
     batch_data = batch_data[:, :max_length]
     
