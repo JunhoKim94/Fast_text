@@ -5,47 +5,34 @@ import collections
 import re
 import pickle
 
-'''
-word ==> subwords ==> summation(hidden) 이 추가된 word2vec = Fasttext
-         BFS 이용subword 추출
-'''
-def split_file(path, number):
-    data = pd.read_csv(path, header = None, encoding= 'utf-8')
-    data = data.fillna(" ")
-
-    total = len(data)
-    batch = total // number
-
-    for i in range(number):
-        data.iloc[i *batch : (i+1) * batch + 1].to_csv(path[:-4] + "%d.csv"%i, header = False, index = False) 
-
 def make_corpus(path, n_grams = None):
     '''
     Basic word2idx : ignore frequency, only word --> id
     data = number_of_data x n (title, description, ...)
     '''
     words = []
+    label = []
     with open(path, 'r', encoding = 'utf-8') as f:
         lines = f.readlines()
         for line in tqdm(lines):
             sen = line[4:]
             sen = sen.strip()
             sen = clean_str(sen, True)                
-            words += sen.split()
-
+            words += [sen]
+            label += [int(clean_str(line[:4]))]
     word2idx = {"UNK" : 0}
-    temp = words[0]
-    for word in words[1:]:
-        gram = (temp + word) if n_grams else word
-        temp = word
-        if gram not in word2idx:
-            word2idx[gram] = len(word2idx)
-    
+    for line in words:
+        line = line.split()
+        if n_grams:
+            line += ['%s_%s' % (line[index],line[index+1]) for index in range(len(line)-1)]
+        for word in line:
+            if word not in word2idx:
+                word2idx[word] = len(word2idx)
+        
     with open("./corpus.pickle", "wb") as f:
         pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
-        
-    return word2idx
-
+            
+    return word2idx, words ,label
 
 def word_to_id(data, label, word2idx, n_grams = False):
     '''
@@ -59,16 +46,11 @@ def word_to_id(data, label, word2idx, n_grams = False):
         if len(line) < 2:
             continue
         words = []
-        temp = line[0]
-        print(temp)
-        for word in line[1:]:
-            gram = temp + word if n_grams else word
-            temp = word
-            if gram not in word2idx:
-                #words += [word2idx["UNK"]]
-                continue
-            else:
-                words += [word2idx[gram]]
+        if n_grams:
+            line += ['%s_%s' % (line[index],line[index+1]) for index in range(len(line)-1)]
+        for word in line:
+            if (word in word2idx) and n_grams:
+                words += [word2idx[word]]
 
         stack.append(words)
 

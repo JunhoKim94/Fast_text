@@ -15,16 +15,17 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 #device = torch.device("cpu")
 print(torch.cuda.is_available())
 
-number = 5
-n_grams = False
+n_grams = True
 
-#path = "./data/ag_news/train.csv"
-path = "C:/Users/dilab/Desktop/A. Multi-Class/amazon_review_polarity_csv/train.csv"
-#path2 = "./data/ag_news/test.csv"
-path2 = "C:/Users/dilab/Desktop/A. Multi-Class/amazon_review_polarity_csv/test.csv"
+path = "./data/ag_news/train.csv"
+#path = "C:/Users/dilab/Desktop/A. Multi-Class/amazon_review_polarity_csv/train.csv"
+path2 = "./data/ag_news/test.csv"
+#path2 = "C:/Users/dilab/Desktop/A. Multi-Class/amazon_review_polarity_csv/test.csv"
 #split_file(path, number)
 
-word2idx = make_corpus(path, n_grams)
+word2idx, data, label = make_corpus(path, n_grams)
+print(len(word2idx))
+print(word2idx)
 #with open("./corpus.pickle", 'rb') as f:
 #    word2idx = pickle.load(f)
 
@@ -34,7 +35,7 @@ test_data, test_label = get_sentence(path2)
 test_data = word_to_id(test_data, test_label , word2idx, n_grams)
 
 vocab_size = len(word2idx)
-class_num = 2
+class_num = 4
 epochs = 10
 learning_rate = 0.001
 batch_size = 3000
@@ -49,10 +50,9 @@ def train_np(vocab_size, class_num, epochs, learning_rate, file_path, test_data,
 
     st = time.time()
 
-
     loss_stack = []
     acc_stack = []
-    data, label = get_sentence(path)
+    #data, label = get_sentence(path)
     total_word = len(data)
 
     for epoch in range(epochs + 1):
@@ -62,7 +62,7 @@ def train_np(vocab_size, class_num, epochs, learning_rate, file_path, test_data,
         epoch_loss = 0
         for iteration in range(total_word // batch_size):
             train_data = word_to_id(data[iteration * batch_size : (iteration + 1)*batch_size], label[iteration * batch_size : (iteration + 1)*batch_size], word2idx, n_grams)
-            #print(train_data, train_data.shape)
+            #print(train_data.shape)
             for i in range(batch_size):
 
                 length = train_data[i,-2]
