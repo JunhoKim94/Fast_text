@@ -31,13 +31,13 @@ test_data = word_to_id(test_data, test_label , word2idx, n_grams)
 vocab_size = len(word2idx)
 class_num = 10
 epochs = 10
-learning_rate = 0.0001
-batch_size = 100
+learning_rate = 0.01
+batch_size = 256
 
-model = Fasttext_torch(vocab_size, embed_size= 10, hidden = 10, output= class_num, padding_idx= None)
+model = Fasttext_torch(vocab_size, embed_size = 10, hidden = 10, output= class_num, padding_idx= None)
 optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
 criterion = torch.nn.CrossEntropyLoss()
-torch.nn.utils.clip_grad_norm_(model.parameters(), 3)
+#torch.nn.utils.clip_grad_norm_(model.parameters(), 9)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
 
 model.to(device)
@@ -60,7 +60,7 @@ for epoch in range(epochs + 1):
     for iteration in range(total_word // batch_size):
         #seed = np.random.choice(total_word, batch_size)
         train_data = word_to_id(data[iteration * batch_size : (iteration + 1)*batch_size], label[iteration * batch_size : (iteration + 1)*batch_size], word2idx, n_grams)
-        x_train, y_train = get_mini_pad(train_data, batch_size, 50)
+        x_train, y_train = get_mini_pad(train_data, batch_size, 300)
 
         x_train = torch.Tensor(x_train).to(torch.long).to(device)
         y_train = torch.Tensor(y_train).to(torch.long).to(device)
@@ -77,7 +77,7 @@ for epoch in range(epochs + 1):
     epoch_loss /= total_word+1
     loss_stack.append(epoch_loss)
 
-    x_test, y_test = get_mini_pad(test_data, batch_size, 50)
+    x_test, y_test = get_mini_pad(test_data, batch_size, 300)
     x_test, y_test = torch.Tensor(x_test).to(torch.long).to(device), torch.Tensor(y_test).to(torch.long).to(device)
     y_val  = torch.argmax(torch.nn.functional.softmax(model(x_test),dim = 1),dim = 1)
     score = len(y_test[y_test == y_val]) / len(y_test)

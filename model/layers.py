@@ -63,7 +63,7 @@ class Ce_losswithsoftmax:
 class Embedding:
     def __init__(self, input_size, output_size, padding_idx):
 
-        W = np.random.uniform(low = -0.5/ output_size, high = 0.5/ output_size, size = (input_size, output_size))
+        W = np.random.uniform(low = -0.01, high = 0.01, size = (input_size, output_size))
 
         #self.W = np.random.uniform(size = (self.input_size, self.output_size))
         self.params = [W]

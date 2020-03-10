@@ -10,12 +10,12 @@ from utils import plot, evaluate
 import torch
 import pickle
 
-n_grams = True
+n_grams = False
 
-path = "./data/yahoo_answers_csv/train.csv"
-#path = "./data/ag_news_csv/train.csv"
-path2 = "./data/yahoo_answers_csv/test.csv"
-#path2 = "./data/ag_news_csv/test.csv"
+#path = "./data/yahoo_answers_csv/train.csv"
+path = "./data/ag_news_csv/train.csv"
+#path2 = "./data/yahoo_answers_csv/test.csv"
+path2 = "./data/ag_news_csv/test.csv"
 
 word2idx, data, label = make_corpus(path, n_grams)
 
@@ -23,10 +23,10 @@ test_data, test_label = get_sentence(path2)
 #test_data = word_to_id(test_data, test_label , word2idx, n_grams)
 
 vocab_size = len(word2idx)
-class_num = 10
+class_num = 4
 epochs = 10
 learning_rate = 0.001
-batch_size = 50
+batch_size = 64
 
 model = Fasttext(input_size = vocab_size, embed_size = 10, hidden = 10, output = class_num, padding_idx = None)
 #optimizer = SGD(lr = 0.001)
