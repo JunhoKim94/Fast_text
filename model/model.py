@@ -53,10 +53,11 @@ class Fasttext_torch(torch.nn.Module):
 
         self.initialize()
     def initialize(self):
-        self.linear.weight.data.uniform_(-0.01,0.01)
+        #self.linear.weight.data.uniform_(-0.01,0.01)
+        torch.nn.init.kaiming_uniform_(self.linear.weight.data)
         self.linear.bias.data.fill_(0)
-        self.embed.weight.data.uniform_(-0.01,0.01)
-
+        #self.embed.weight.data.uniform_(-0.01,0.01)
+        self.embed.weight.data.fill_(0)
 
     def forward(self, x):
         '''
@@ -66,7 +67,7 @@ class Fasttext_torch(torch.nn.Module):
         output = self.embed(x)
 
         output = torch.sum(output, dim = 1).squeeze(1)/x.shape[1]
-        #output = torch.nn.functional.dropout(output, 0.5)
+        #output = torch.nn.functional.dropout(output, 0.2)
         output = self.linear(output)
 
         return output

@@ -29,10 +29,22 @@ def make_corpus(path, n_grams = None):
             if word not in word2idx:
                 word2idx[word] = len(word2idx)
         
-    with open("./corpus.pickle", "wb") as f:
-        pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
+    #with open("./corpus.pickle", "wb") as f:
+    #    pickle.dump(word2idx,f,protocol=pickle.HIGHEST_PROTOCOL)
             
-    return word2idx, words ,label
+    return word2idx, words , label
+
+def rand_sample(data, label, batch):
+    seed = np.random.choice(len(data), batch)
+    b_train = []
+    b_label = []
+    for s in seed:
+        b_train.append(data[s])
+        b_label.append(label[s])
+
+    return b_train, b_label
+
+
 
 def word_to_id(data, label, word2idx, n_grams = False):
     '''

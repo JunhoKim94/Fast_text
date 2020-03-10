@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from utils import plot, evaluate
 import torch
 import pickle
+import random
 
 n_grams = False
 
@@ -45,7 +46,8 @@ for epoch in range(epochs + 1):
     #메모리 할당을 위한 batch
     epoch_loss = 0
     for iteration in range(total_word):
-        train_data = word_to_id([data[iteration]], [label[iteration]], word2idx, n_grams)
+        seed = random.randint(0, total_word)
+        train_data = word_to_id([data[seed]], [label[seed]], word2idx, n_grams)
         length = train_data[0,-2]
         x_train = train_data[0,:length]
         y_train = train_data[0,-1] - 1
